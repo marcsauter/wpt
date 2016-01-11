@@ -6,13 +6,6 @@ import (
 	"math"
 )
 
-type GPX struct {
-	XMLName   xml.Name   `xml:"gpx"`
-	Version   string     `xml:"version,attr"`
-	Creator   string     `xml:"creator,attr"`
-	Waypoints []Waypoint `xml:"wpt"`
-}
-
 type Waypoint struct {
 	XMLName   xml.Name `xml:"wpt"`
 	Latitude  float64  `xml:"lat,attr"`
@@ -34,6 +27,21 @@ func NewWaypoints(filename string) (*GPX, error) {
 	return &g, err
 }
 
+func (w *Waypoint) Distance(lat, lon float64) float64 {
+	lat1 := lat * math.Pi / 180
+	lon1 := lon * math.Pi / 180
+	lat2 := w.Latitude * math.Pi / 180
+	lon2 := w.Longitude * math.Pi / 180
+	return 6378.388 * math.Acos(math.Sin(lat1)*math.Sin(lat2)+math.Cos(lat1)*math.Cos(lat2)*math.Cos(lon2-lon1)) * 1000
+}
+
+type GPX struct {
+	XMLName   xml.Name   `xml:"gpx"`
+	Version   string     `xml:"version,attr"`
+	Creator   string     `xml:"creator,attr"`
+	Waypoints []Waypoint `xml:"wpt"`
+}
+
 func (g *GPX) Find(lat, lon float64) (string, int) {
 	nearest := g.Waypoints[0]
 	distance := g.Waypoints[0].Distance(lat, lon)
@@ -45,12 +53,4 @@ func (g *GPX) Find(lat, lon float64) (string, int) {
 		}
 	}
 	return nearest.Name, int(distance)
-}
-
-func (w *Waypoint) Distance(lat, lon float64) float64 {
-	lat1 := lat * math.Pi / 180
-	lon1 := lon * math.Pi / 180
-	lat2 := w.Latitude * math.Pi / 180
-	lon2 := w.Longitude * math.Pi / 180
-	return 6378.388 * math.Acos(math.Sin(lat1)*math.Sin(lat2)+math.Cos(lat1)*math.Cos(lat2)*math.Cos(lon2-lon1)) * 1000
 }
